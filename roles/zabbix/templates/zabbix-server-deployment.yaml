@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: zabbix-server-mysql
+  name: zabbix-server-mysql
+  namespace: zabbix
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zabbix-server-mysql
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: zabbix-server-mysql
+    spec:
+      containers:
+      - image: zabbix/zabbix-server-mysql:7.4-ubuntu-latest
+        name: zabbix-server-mysql
+        ports:
+          - containerPort: 10051
+            name: zabbix-port
+            protocol: TCP
+        env:
+          - name: DB_SERVER_HOST
+            value: mysql.database.svc.cluster.local
+          - name: DB_SERVER_PORT
+            value: "3306"
+          - name: MYSQL_USER
+            value: "zabbix"
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: zabbix-db-secret
+                key: zabbix-db-password
+          - name: MYSQL_DATABASE
+            value: zabbix
+status: {}

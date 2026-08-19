@@ -1,0 +1,7 @@
+kubernetes_version_series: "1.36"
+kubernetes_version: "1.36.2-2.1"
+pod_network_cidr: "10.244.0.0/16"
+crictl_version: "1.36.0"
+mysql_root_password: "{{ vault_mysql_root_password }}"
+grafana_admin_password: "{{ vault_grafana_admin_password }}"
+zabbix_db_password: "{{ vault_zabbix_db_password }}"

@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: zabbix-ingress
+  namespace: zabbix
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: zabbix.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: zabbix-web-service
+                port:
+                  number: 80

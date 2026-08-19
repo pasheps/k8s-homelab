@@ -1,0 +1,22 @@
+- name: Базовая настройка всех нод кластера
+  hosts: all
+  roles:
+    - common
+    - containerd
+    - kube-deps
+
+- name: Инициализация control-plane
+  hosts: control_plane
+  roles:
+    - control-plane
+    - helm
+    - storage
+    - ingress
+    - mysql
+    - monitoring
+    - zabbix
+
+- name: Присоединение worker-нод
+  hosts: workers
+  roles:
+    - worker

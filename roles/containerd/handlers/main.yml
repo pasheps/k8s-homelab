@@ -1,0 +1,4 @@
+- name: Перезапустить containerd
+  systemd:
+    name: containerd
+    state: restarted

@@ -1,0 +1,22 @@
+- name: Download manifest local-path-provisioner
+  get_url:
+    url: https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+    dest: /tmp/local-path-storage.yaml
+    mode: '0644'
+  register: local_path_download
+  until: local_path_download is succeeded
+  retries: 3
+  delay: 5
+
+- name: Apply local-path-provisioner
+  kubernetes.core.k8s:
+    kubeconfig: "/home/{{ ansible_user }}/.kube/config"
+    state: present
+    src: /tmp/local-path-storage.yaml
+
+- name: Make local-path StorageClass default
+  command: >
+    kubectl --kubeconfig=/home/{{ ansible_user }}/.kube/config
+    patch storageclass local-path
+    -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+  changed_when: true

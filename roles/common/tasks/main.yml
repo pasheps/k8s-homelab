@@ -1,0 +1,70 @@
+
+
+- name: Отключить swap немедленно
+  command: swapoff -a
+  when: ansible_swaptotal_mb > 0
+
+- name: Закомментировать swap в fstab (чтобы не включился после перезагрузки)
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*\sswap\s.*)$'
+    replace: '# \1'
+
+- name: Установить hostname согласно инвентарю
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: Прописать hostname в /etc/hosts (127.0.1.1)
+  lineinfile:
+    path: /etc/hosts
+    regexp: '^127\.0\.1\.1'
+    line: "127.0.1.1 {{ inventory_hostname }}"
+
+- name: Добавить записи всех нод кластера в /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ hostvars[item].ansible_host }} {{ item }}"
+  loop: "{{ groups['all'] }}"
+
+- name: Загрузить модуль overlay
+  modprobe:
+    name: overlay
+    state: present
+
+- name: Загрузить модуль br_netfilter
+  modprobe:
+    name: br_netfilter
+    state: present
+
+- name: Закрепить модули ядра через конфиг (переживёт перезагрузку)
+  copy:
+    dest: /etc/modules-load.d/k8s.conf
+    content: |
+      overlay
+      br_netfilter
+
+- name: Настроить sysctl-параметры для Kubernetes
+  copy:
+    dest: /etc/sysctl.d/k8s.conf
+    content: |
+      net.bridge.bridge-nf-call-iptables  = 1
+      net.bridge.bridge-nf-call-ip6tables = 1
+      net.ipv4.ip_forward                 = 1
+
+- name: Применить sysctl без перезагрузки
+  command: sysctl --system
+
+- name: Заставить apt использовать только IPv4
+  copy:
+    dest: /etc/apt/apt.conf.d/99force-ipv4
+    content: 'Acquire::ForceIPv4 "true";'
+
+- name: Установить базовые пакеты
+  apt:
+    name:
+      - curl
+      - gnupg
+      - apt-transport-https
+      - ca-certificates
+    state: present
+    update_cache: yes

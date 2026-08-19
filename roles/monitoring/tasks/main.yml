@@ -1,0 +1,52 @@
+- name: Add repo prometheus-community
+  kubernetes.core.helm_repository:
+    name: prometheus-community
+    repo_url: "https://prometheus-community.github.io/helm-charts"
+
+- name: Install kube-prometheus-stack
+  kubernetes.core.helm:
+    name: monitoring
+    chart_ref: prometheus-community/kube-prometheus-stack
+    release_namespace: monitoring
+    create_namespace: true
+    kubeconfig: "/home/{{ ansible_user }}/.kube/config"
+    values:
+      grafana:
+        adminPassword: "{{ grafana_admin_password }}"
+        persistence:
+          enabled: true
+          storageClassName: "local-path"
+          size: 5Gi
+      prometheus:
+        prometheusSpec:
+          storageSpec:
+            volumeClaimTemplate:
+              spec:
+                storageClassName: "local-path"
+                accessModes: ["ReadWriteOnce"]
+                resources:
+                  requests:
+                    storage: 10Gi
+
+- name: Wait for pod Grafana is ready
+  command: >
+    kubectl --kubeconfig=/home/{{ ansible_user }}/.kube/config
+    wait --for=condition=ready pod
+    -l app.kubernetes.io/name=grafana
+    -n monitoring
+    --timeout=120s
+  changed_when: false
+
+- name: Install password for Grafana admin
+  command: >
+    kubectl --kubeconfig=/home/{{ ansible_user }}/.kube/config
+    exec -n monitoring deploy/monitoring-grafana -c grafana --
+    grafana cli admin reset-admin-password {{ grafana_admin_password }}
+  changed_when: true
+  no_log: true
+
+- name: Apply grafana-ingress manifests
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: "/home/{{ ansible_user }}/.kube/config"
+    template: grafana-ingress.yaml

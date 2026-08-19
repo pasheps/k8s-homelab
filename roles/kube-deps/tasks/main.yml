@@ -1,0 +1,53 @@
+- name: Установка дополнительных программ
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gpg
+    state: present
+    update_cache: yes
+
+- name: Создать директорию для ключей apt
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Download GPG-key Kubernetes
+  get_url:
+    url: "https://pkgs.k8s.io/core:/stable:/v{{ kubernetes_version_series }}/deb/Release.key"
+    dest: /tmp/kubernetes-release.key
+    mode: '0644'
+  register: k8s_key_download
+  until: k8s_key_download is succeeded
+  retries: 3
+  delay: 5
+
+- name: Convert the key to dearmored format for apt
+  command: gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg /tmp/kubernetes-release.key
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+- name: Создать файл репозитория Kubernetes
+  copy:
+    dest: /etc/apt/sources.list.d/kubernetes.list
+    content: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ kubernetes_version_series }}/deb/ /"
+
+- name: Установка kubelet, kubeadm, kubectl
+  apt:
+    name:
+      - "kubelet={{ kubernetes_version }}"
+      - "kubeadm={{ kubernetes_version }}"
+      - "kubectl={{ kubernetes_version }}"
+    update_cache: yes
+
+- name: Ставим на паузу пакеты
+  command: apt-mark hold kubelet kubeadm kubectl
+  changed_when: false
+
+- name: Запустить kubelet
+  systemd:
+    name: kubelet
+    enabled: true
+    state: started

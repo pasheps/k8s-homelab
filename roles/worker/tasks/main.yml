@@ -1,0 +1,9 @@
+- name: Получить join-команду с master
+  command: kubeadm token create --print-join-command
+  register: join_command_raw
+  delegate_to: "{{ groups['control_plane'][0] }}"
+
+- name: Join worker to cluster
+  command: "{{ join_command_raw.stdout }}"
+  args:
+    creates: /etc/kubernetes/kubelet.conf

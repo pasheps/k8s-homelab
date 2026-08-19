@@ -1,0 +1,20 @@
+- name: Check if helm installed
+  command: helm version --short
+  register: helm_version_output
+  changed_when: false
+  failed_when: false
+
+- name: Download helm script
+  get_url:
+    url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
+    dest: /tmp/get-helm.sh
+    mode: '0700'
+  register: helm_packet
+  when: helm_version_output.rc != 0
+  until: helm_packet is succeeded
+  retries: 3
+  delay: 5
+
+- name: Run helm script
+  command: bash /tmp/get-helm.sh
+  when: helm_version_output.rc != 0

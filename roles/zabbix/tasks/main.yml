@@ -1,0 +1,14 @@
+- name: Apply zabbix manifests
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: "/home/{{ ansible_user }}/.kube/config"
+    template: "{{ item }}"
+  loop:
+    - namespace.yaml
+    - zabbix-db-secret.yaml.j2
+    - zabbix-server-deployment.yaml
+    - zabbix-server-service.yaml
+    - zabbix-web-deployment.yaml
+    - zabbix-web-service.yaml
+    - zabbix-agent-daemonset.yaml
+    - zabbix-ingress.yaml

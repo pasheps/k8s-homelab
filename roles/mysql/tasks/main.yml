@@ -1,0 +1,26 @@
+- name: Apply Mysql manifests
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: "/home/{{ ansible_user }}/.kube/config"
+    template: "{{ item }}"
+  loop:
+    - namespace.yaml
+    - secret.yaml.j2
+    - service.yaml
+    - statefulset.yaml
+
+- name: Wait for pod MySQL
+  command: >
+    kubectl --kubeconfig=/home/{{ ansible_user }}/.kube/config
+    wait --for=condition=ready pod mysql-0
+    -n database --timeout=120s
+  changed_when: false
+
+- name: Create user MySQL for Zabbix
+  command: >
+    kubectl --kubeconfig=/home/{{ ansible_user }}/.kube/config
+    exec -n database mysql-0 --
+    mysql -u root -p{{ mysql_root_password }}
+    -e "CREATE USER IF NOT EXISTS 'zabbix'@'%' IDENTIFIED BY '{{ zabbix_db_password }}'; GRANT ALL PRIVILEGES ON zabbix.* TO 'zabbix'@'%'; FLUSH PRIVILEGES;"
+  changed_when: true
+#  no_log: true

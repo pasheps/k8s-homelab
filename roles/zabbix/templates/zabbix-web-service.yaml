@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: zabbix-web-service
+  namespace: zabbix
+  labels:
+    app: zabbix-web-mysql
+spec:
+  type: ClusterIP
+  ports:
+    - name: zabbix-web-port
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: zabbix-web-mysql

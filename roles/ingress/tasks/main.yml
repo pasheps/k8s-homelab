@@ -1,0 +1,15 @@
+- name: Download manifest ingress-nginx bare-metall
+  get_url:
+    url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/refs/heads/main/deploy/static/provider/baremetal/deploy.yaml
+    dest: /tmp/ingress-nginx.yaml
+    mode: '0644'
+  register: ingress_nginx_download
+  until: ingress_nginx_download is succeeded
+  retries: 3
+  delay: 5
+
+- name: Apply ingress-nginx manifest
+  kubernetes.core.k8s:
+    kubeconfig: "/home/{{ ansible_user }}/.kube/config"
+    state: present
+    src: /tmp/ingress-nginx.yaml
