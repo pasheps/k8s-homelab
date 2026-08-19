@@ -1,5 +1,5 @@
 ---
-- name: Установить зависимости для подключения репозитория
+- name: Install dependencies to connect the repository
   apt:
     name:
       - ca-certificates
@@ -8,13 +8,13 @@
     state: present
     update_cache: yes
 
-- name: Создать директорию для ключей apt (keyrings)
+- name: Create a directory for apt keys (keyrings)
   file:
     path: /etc/apt/keyrings
     state: directory
     mode: '0755'
 
-- name: Скачать и добавить GPG-ключ Docker-репозитория
+- name: Download and add the Docker repository GPG key
   get_url:
     url: https://download.docker.com/linux/ubuntu/gpg
     dest: /etc/apt/keyrings/docker.asc
@@ -24,31 +24,31 @@
   retries: 3
   delay: 5
 
-- name: Добавить репозиторий Docker в apt sources
+- name: Add the Docker repository to apt sources
   apt_repository:
     repo: "deb [arch={{ ansible_architecture | replace('x86_64','amd64') }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable"
     state: present
     filename: docker
 
-- name: Установить containerd
+- name: Install containerd
   apt:
     name: containerd.io
     state: present
     update_cache: yes
 
-- name: Создать директорию для конфига containerd
+- name: Create a directory for the containerd config
   file:
     path: /etc/containerd
     state: directory
 
-- name: Развернуть конфиг containerd из шаблона
+- name: Deploy containerd config from template
   template:
     src: config.toml.j2
     dest: /etc/containerd/config.toml
     mode: '0644'
   notify: Перезапустить containerd
 
-- name: Убедиться, что containerd запущен и включен в автозапуск
+- name: Containerd is running and enabled for autostart
   systemd:
     name: containerd
     state: started

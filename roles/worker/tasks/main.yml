@@ -1,4 +1,4 @@
-- name: Получить join-команду с master
+- name: Get a join command from master
   command: kubeadm token create --print-join-command
   register: join_command_raw
   delegate_to: "{{ groups['control_plane'][0] }}"

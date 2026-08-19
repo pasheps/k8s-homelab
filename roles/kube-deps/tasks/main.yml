@@ -1,4 +1,4 @@
-- name: Установка дополнительных программ
+- name: Installing additional programs
   apt:
     name:
       - apt-transport-https
@@ -8,7 +8,7 @@
     state: present
     update_cache: yes
 
-- name: Создать директорию для ключей apt
+- name: Create a directory for apt keys
   file:
     path: /etc/apt/keyrings
     state: directory
@@ -29,12 +29,12 @@
   args:
     creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
-- name: Создать файл репозитория Kubernetes
+- name: Create a Kubernetes repository file
   copy:
     dest: /etc/apt/sources.list.d/kubernetes.list
     content: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ kubernetes_version_series }}/deb/ /"
 
-- name: Установка kubelet, kubeadm, kubectl
+- name: Installation kubelet, kubeadm, kubectl
   apt:
     name:
       - "kubelet={{ kubernetes_version }}"
@@ -42,11 +42,11 @@
       - "kubectl={{ kubernetes_version }}"
     update_cache: yes
 
-- name: Ставим на паузу пакеты
+- name: Pause packages
   command: apt-mark hold kubelet kubeadm kubectl
   changed_when: false
 
-- name: Запустить kubelet
+- name: Run kubelet
   systemd:
     name: kubelet
     enabled: true

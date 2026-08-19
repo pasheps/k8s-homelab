@@ -1,4 +1,4 @@
-- name: Инициализировать Kubernetes
+- name: Initialize Kubernetes
   command: >
     kubeadm init
     --pod-network-cidr={{ pod_network_cidr }}
@@ -7,7 +7,7 @@
     creates: /etc/kubernetes/admin.conf
   register: kubeadm_init
 
-- name: Создать директорию .kube
+- name: Create a .kube directory
   file:
     path: "/home/{{ ansible_user }}/.kube"
     state: directory
@@ -15,7 +15,7 @@
     group: "{{ ansible_user }}"
     mode: '0755'
 
-- name: Копировать конфиг к пользователю
+- name: Copy config to user
   copy:
     src: /etc/kubernetes/admin.conf
     dest: "/home/{{ ansible_user }}/.kube/config"
@@ -24,30 +24,30 @@
     group: "{{ ansible_user }}"
     mode: '0600'
 
-- name: Установть pip3
+- name: Install pip3
   apt:
     name: python3-pip
     state: present
     update_cache: yes
 
-- name: Установить Python-библиотеку kubernetes
+- name: Install the kubernetes Python-library
   pip:
     name: kubernetes
     state: present
     extra_args: --break-system-packages
 
-- name: Скачать манифест flannel
+- name: Download the flannel manifest
   get_url:
     url: https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
     dest: /tmp/kube-flannel.yml
 
-- name: Применение манифеста flannel
+- name: Apply the flannel manifest
   kubernetes.core.k8s:
     kubeconfig: "/home/{{ ansible_user }}/.kube/config"
     state: present
     src: /tmp/kube-flannel.yml
 
-- name: Указать Flannel использовать правильный сетевой интерфейс
+- name: Tell Flannel to use the correct network interface
   kubernetes.core.k8s_json_patch:
     kind: DaemonSet
     name: kube-flannel-ds
